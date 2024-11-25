@@ -2,7 +2,10 @@
 
 namespace Webkul\DataTransfer\Helpers\Importers;
 
+use Illuminate\Http\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage as StorageFacade;
+use Webkul\Core\Filesystem\FileStorer;
 
 class FieldProcessor
 {
@@ -14,7 +17,7 @@ class FieldProcessor
      * @param  string  $path  The path to the media files.
      * @return mixed The processed value of the field.
      */
-    public function handleField($field, mixed $value, string $path)
+    public function handleField($field, mixed $value, string $path, array $rowData)
     {
         if (empty($value)) {
             return;
@@ -22,12 +25,12 @@ class FieldProcessor
 
         switch ($field->type) {
             case 'gallery':
-                $value = $this->handleMediaField($value, $path);
+                $value = $this->handleMediaField($field->type, $value, $path, $rowData);
 
                 break;
             case 'image':
             case 'file':
-                $value = $this->handleMediaField($value, $path);
+                $value = $this->handleMediaField($field->type, $value, $path, $rowData);
                 if (is_array($value)) {
                     $value = implode(',', $value);
                 }
@@ -53,7 +56,7 @@ class FieldProcessor
      * @param  string  $imgpath  The path to the media files.
      * @return array|null valid paths of the media files, or null if none are found.
      */
-    protected function handleMediaField(mixed $value, string $imgpath): ?array
+    protected function handleMediaField(string $attributeCode, mixed $value, string $imgpath, array $rowData): ?array
     {
         $paths = is_array($value) ? $value : [$value];
         $validPaths = [];
@@ -61,11 +64,37 @@ class FieldProcessor
         foreach ($paths as $path) {
             $trimmedPath = trim($path);
 
-            if (StorageFacade::disk('local')->has('public/'.$imgpath.$trimmedPath)) {
+            if (filter_var($trimmedPath, FILTER_VALIDATE_URL)) {
+                $imagePath = 'product'.DIRECTORY_SEPARATOR.$rowData['sku'].DIRECTORY_SEPARATOR.$attributeCode;
+                if ($uploadedPath = $this->saveImageFromUrl($trimmedPath, $imagePath)){
+                    $validPaths[] = $uploadedPath;
+                }
+            } elseif (StorageFacade::disk('s3')->has($imgpath.$trimmedPath)) {
+                $validPaths[] = $imgpath.$trimmedPath;
+            } elseif (StorageFacade::disk('local')->has('public/'.$imgpath.$trimmedPath)) {
                 $validPaths[] = $imgpath.$trimmedPath;
             }
         }
 
         return count($validPaths) ? $validPaths : null;
+    }
+
+    protected function saveImageFromUrl(string $url, string $path, array $options = []): string
+    {
+        $response = Http::withOptions(['verify' => false])->get($url);
+
+        if (!$response->successful()) {
+
+            return null;
+        }
+
+        $tempFilePath = tempnam(sys_get_temp_dir(), 'url_image_');
+        file_put_contents($tempFilePath, $response->body());
+
+        $tempFile = new File($tempFilePath);
+        $fileName = basename(parse_url($url, PHP_URL_PATH));
+
+        $fileStorer = new FileStorer();
+        return $fileStorer->storeAs($path, $fileName, $tempFile, $options);
     }
 }
