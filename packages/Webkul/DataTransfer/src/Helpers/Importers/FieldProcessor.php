@@ -17,7 +17,7 @@ class FieldProcessor
      * @param  string  $path  The path to the media files.
      * @return mixed The processed value of the field.
      */
-    public function handleField($field, mixed $value, string $path, array $rowData)
+    public function handleField($field, mixed $value, string $path, array $rowData, string $importType)
     {
         if (empty($value)) {
             return;
@@ -25,12 +25,12 @@ class FieldProcessor
 
         switch ($field->type) {
             case 'gallery':
-                $value = $this->handleMediaField($field->type, $value, $path, $rowData);
+                $value = $this->handleMediaField($field->type, $value, $path, $rowData, $importType);
 
                 break;
             case 'image':
             case 'file':
-                $value = $this->handleMediaField($field->type, $value, $path, $rowData);
+                $value = $this->handleMediaField($field->type, $value, $path, $rowData, $importType);
                 if (is_array($value)) {
                     $value = implode(',', $value);
                 }
@@ -56,7 +56,7 @@ class FieldProcessor
      * @param  string  $imgpath  The path to the media files.
      * @return array|null valid paths of the media files, or null if none are found.
      */
-    protected function handleMediaField(string $attributeCode, mixed $value, string $imgpath, array $rowData): ?array
+    protected function handleMediaField(string $attributeCode, mixed $value, string $imgpath, array $rowData, string $importType): ?array
     {
         $paths = is_array($value) ? $value : [$value];
         $validPaths = [];
@@ -65,7 +65,9 @@ class FieldProcessor
             $trimmedPath = trim($path);
 
             if (filter_var($trimmedPath, FILTER_VALIDATE_URL)) {
-                $imagePath = 'product'.DIRECTORY_SEPARATOR.$rowData['sku'].DIRECTORY_SEPARATOR.$attributeCode;
+                $skuOrCode = $importType === 'product' ? $rowData['sku'] : $rowData['code'];
+                $imagePath = $importType.DIRECTORY_SEPARATOR.$skuOrCode.DIRECTORY_SEPARATOR.$attributeCode;
+
                 if ($uploadedPath = $this->saveImageFromUrl($trimmedPath, $imagePath)){
                     $validPaths[] = $uploadedPath;
                 }
