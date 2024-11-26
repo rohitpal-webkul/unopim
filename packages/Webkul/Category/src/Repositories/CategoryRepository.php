@@ -253,7 +253,7 @@ class CategoryRepository extends Repository
 
         if (! empty($localeValues[$currentLocaleCode])) {
             $localeValues[$currentLocaleCode] = $this->processAdditionalDataValues(
-                categoryId: $category->id,
+                categoryCode: $category->code,
                 values: $localeValues[$currentLocaleCode],
                 categoryValues: ($category->additional_data[self::LOCALE_VALUES_KEY][$currentLocaleCode] ?? [])
             );
@@ -271,7 +271,7 @@ class CategoryRepository extends Repository
 
         if (! empty($commonValues)) {
             $commonValues = $this->processAdditionalDataValues(
-                categoryId: $category->id,
+                categoryCode: $category->code,
                 values: $commonValues,
                 categoryValues: ($category->additional_data[self::COMMON_VALUES_KEY] ?? [])
             );
@@ -295,7 +295,7 @@ class CategoryRepository extends Repository
     /**
      * process values by value type like files and images
      */
-    protected function processAdditionalDataValues(int $categoryId, array $values, array $categoryValues = []): array
+    protected function processAdditionalDataValues(string $categoryCode, array $values, array $categoryValues = []): array
     {
         $values = array_filter(
             ! empty($categoryValues)
@@ -310,7 +310,7 @@ class CategoryRepository extends Repository
 
             if ($fieldValue instanceof UploadedFile) {
                 $values[$field] = $this->fileStorer->store(
-                    path: 'category'.DIRECTORY_SEPARATOR.$categoryId.DIRECTORY_SEPARATOR.$field,
+                    path: 'category'.DIRECTORY_SEPARATOR.$categoryCode.DIRECTORY_SEPARATOR.$field,
                     file: $fieldValue,
                     options: [FileStorer::HASHED_FOLDER_NAME_KEY => true]
                 );

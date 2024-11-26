@@ -2,6 +2,7 @@
 
 namespace Webkul\DataTransfer\Helpers\Importers;
 
+use Exception;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage as StorageFacade;
@@ -9,6 +10,8 @@ use Webkul\Core\Filesystem\FileStorer;
 
 class FieldProcessor
 {
+    public function __construct(public fileStorer $fileStorer) {}
+
     /**
      * Processes a field value based on its type.
      *
@@ -68,12 +71,10 @@ class FieldProcessor
                 $skuOrCode = $importType === 'product' ? $rowData['sku'] : $rowData['code'];
                 $imagePath = $importType.DIRECTORY_SEPARATOR.$skuOrCode.DIRECTORY_SEPARATOR.$attributeCode;
 
-                if ($uploadedPath = $this->saveImageFromUrl($trimmedPath, $imagePath)){
+                if ($uploadedPath = $this->saveImageFromUrl($trimmedPath, $imagePath)) {
                     $validPaths[] = $uploadedPath;
                 }
-            } elseif (StorageFacade::disk('s3')->has($imgpath.$trimmedPath)) {
-                $validPaths[] = $imgpath.$trimmedPath;
-            } elseif (StorageFacade::disk('local')->has('public/'.$imgpath.$trimmedPath)) {
+            } elseif (StorageFacade::has($imgpath.$trimmedPath)) {
                 $validPaths[] = $imgpath.$trimmedPath;
             }
         }
@@ -85,18 +86,20 @@ class FieldProcessor
     {
         $response = Http::withOptions(['verify' => false])->get($url);
 
-        if (!$response->successful()) {
-
+        if (! $response->successful()) {
             return null;
         }
 
         $tempFilePath = tempnam(sys_get_temp_dir(), 'url_image_');
-        file_put_contents($tempFilePath, $response->body());
+        try {
+            file_put_contents($tempFilePath, $response->body());
+        } catch (Exception $e) {
+            throw new Exception("Unable to write temporary file for image url.". $e);
+        }
 
         $tempFile = new File($tempFilePath);
         $fileName = basename(parse_url($url, PHP_URL_PATH));
 
-        $fileStorer = new FileStorer();
-        return $fileStorer->storeAs($path, $fileName, $tempFile, $options);
+        return $this->fileStorer->storeAs($path, $fileName, $tempFile, $options);
     }
 }

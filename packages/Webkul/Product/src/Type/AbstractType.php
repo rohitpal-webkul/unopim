@@ -262,7 +262,7 @@ abstract class AbstractType
          */
         if (! empty($channelAndLocaleValues[$currentChannelCode][$currentLocaleCode])) {
             $productChannelLocaleValues[$currentChannelCode][$currentLocaleCode] = $this->processValues(
-                productId: $product->id,
+                productSku: $product->sku,
                 values: $channelAndLocaleValues[$currentChannelCode][$currentLocaleCode],
                 productValues: ($productChannelLocaleValues[$currentChannelCode][$currentLocaleCode] ?? [])
             );
@@ -283,7 +283,7 @@ abstract class AbstractType
          */
         if (! empty($channelValues[$currentChannelCode])) {
             $productChannelValues[$currentChannelCode] = $this->processValues(
-                productId: $product->id,
+                productSku: $product->sku,
                 values: $channelValues[$currentChannelCode],
                 productValues: ($productChannelValues[$currentChannelCode] ?? [])
             );
@@ -300,7 +300,7 @@ abstract class AbstractType
          */
         if (! empty($localeValues[$currentLocaleCode])) {
             $productLocaleValues[$currentLocaleCode] = $this->processValues(
-                productId: $product->id,
+                productSku: $product->sku,
                 values: $localeValues[$currentLocaleCode],
                 productValues: ($productLocaleValues[$currentLocaleCode] ?? [])
             );
@@ -317,7 +317,7 @@ abstract class AbstractType
          */
         if (! empty($commonValues)) {
             $commonValues = $this->processValues(
-                productId: $product->id,
+                productSku: $product->sku,
                 values: $commonValues,
                 productValues: ($product->values[self::COMMON_VALUES_KEY] ?? []),
                 isCommonAttribute: true
@@ -358,7 +358,7 @@ abstract class AbstractType
     /**
      * process values by value type like files and images
      */
-    protected function processValues(int $productId, array $values, array $productValues = [], bool $isCommonAttribute = false): array
+    protected function processValues(string $productSku, array $values, array $productValues = [], bool $isCommonAttribute = false): array
     {
         $values = array_filter(
             ! empty($productValues)
@@ -372,7 +372,7 @@ abstract class AbstractType
                 $type = $attribute?->type;
 
                 if ($type === 'image' || $type === 'gallery' || $type === 'file') {
-                    $path = 'product'.DIRECTORY_SEPARATOR.$productId.DIRECTORY_SEPARATOR.$field;
+                    $path = 'product'.DIRECTORY_SEPARATOR.$productSku.DIRECTORY_SEPARATOR.$field;
 
                     if ($type === 'gallery') {
                         $values[$field] = array_map(function ($val) use ($path) {

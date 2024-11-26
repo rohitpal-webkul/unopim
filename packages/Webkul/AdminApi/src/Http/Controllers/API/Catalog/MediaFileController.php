@@ -67,7 +67,7 @@ class MediaFileController extends ApiController
             foreach ($attributeValue as $value) {
                 if ($value instanceof UploadedFile) {
                     $filePath[] = $this->fileStorer->store(
-                        path: 'product'.DIRECTORY_SEPARATOR.$productId.DIRECTORY_SEPARATOR.$attribute,
+                        path: 'product'.DIRECTORY_SEPARATOR.$product->sku.DIRECTORY_SEPARATOR.$attribute,
                         file: $value
                     );
                 }
@@ -123,7 +123,7 @@ class MediaFileController extends ApiController
         try {
             if ($fieldValue instanceof UploadedFile) {
                 $filePath = $this->fileStorer->store(
-                    path: 'category'.DIRECTORY_SEPARATOR.$categoryId.DIRECTORY_SEPARATOR.$field,
+                    path: 'category'.DIRECTORY_SEPARATOR.$category->code.DIRECTORY_SEPARATOR.$field,
                     file: $fieldValue
                 );
 
