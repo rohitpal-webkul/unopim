@@ -35,6 +35,11 @@ class Importer extends AbstractImporter
     public const PRODUCT_TYPE_SIMPLE = 'simple';
 
     /**
+     * Product type simple
+     */
+    public const IMPORT_TYPE = 'product';
+
+    /**
      * Product type virtual
      */
     public const PRODUCT_TYPE_VIRTUAL = 'virtual';
@@ -743,7 +748,7 @@ class Importer extends AbstractImporter
                 $value = explode(',', $value);
             }
 
-            $value = $this->fieldProcessor->handleField($attribute, $value, $imageDirPath);
+            $value = $this->fieldProcessor->handleField($attribute, $value, $imageDirPath, self::IMPORT_TYPE);
 
             if ($attribute->type === 'price') {
                 $value = $this->formatPriceValueWithCurrency($currencyCode, $value, $attribute->getValueFromProductValues($attributeValues, $rowData['channel'] ?? null, $rowData['locale'] ?? null));

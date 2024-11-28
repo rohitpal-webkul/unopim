@@ -27,6 +27,11 @@ class Importer extends AbstractImporter
     public const ERROR_DUPLICATE_CODE = 'duplicate_code';
 
     /**
+     *  Error code for duplicated code
+     */
+    public const IMPORT_TYPE = 'category';
+
+    /**
      * Error code for non existing code
      */
     public const ERROR_CODE_NOT_FOUND_FOR_DELETE = 'slug_not_found_to_delete';
@@ -367,7 +372,7 @@ class Importer extends AbstractImporter
 
             $catalogField = $this->categoryFieldRepository->where('code', $field)->first();
 
-            $value = $this->fieldProcessor->handleField($catalogField, $value, $imageDirPath);
+            $value = $this->fieldProcessor->handleField($catalogField, $value, $imageDirPath, self::IMPORT_TYPE);
 
             if ($catalogField->value_per_locale === self::VALUE_PER_LOCALE) {
                 $locale = $rowData['locale'] ?? null;
